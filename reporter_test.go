@@ -11,6 +11,7 @@ func init() {
 		EnvName:              "testing",
 		StuckFunctionTimeout: time.Second,
 	})
+	Init(client, nil, config)
 }
 
 var testTags = MetricTags{
@@ -18,18 +19,32 @@ var testTags = MetricTags{
 	"service": "users",
 }
 
+var testErrTags = MetricTags{
+	"layer":   "service",
+	"service": "users",
+	"error":   "an-error",
+}
+
 func TestReportFuncCall(t *testing.T) {
-	ReportFuncCall(testTags)
+	var testReporter = NewReporter()
+	testReporter.ReportCall(testTags)
+}
+
+func TestReportFuncError(t *testing.T) {
+	var testReporter = NewReporter()
+	testReporter.ReportError(testErrTags)
 }
 
 func TestReportFuncTiming(t *testing.T) {
-	stopFn := ReportFuncTiming(testTags)
+	var testReporter = NewReporter()
+	stopFn := testReporter.ReportCall(testTags)
 	time.Sleep(500 * time.Millisecond)
 	stopFn()
 }
 
 func TestReportFuncTimingStuck(t *testing.T) {
-	stopFn := ReportFuncTiming(testTags)
+	var testReporter = NewReporter()
+	stopFn := testReporter.ReportCall(testTags)
 	time.Sleep(2 * time.Second)
 	stopFn()
 }

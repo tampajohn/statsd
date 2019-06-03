@@ -7,40 +7,70 @@ import (
 	"time"
 )
 
-func ReportFuncError(tags ...MetricTags) {
-	fn := funcName()
-	reportFunc(fn, "error", tags...)
+type Reporter interface {
+	ReportError(tags ...MetricTags)
+	ReportCall(tags ...MetricTags) StopTimerFunc
 }
 
-func ReportFuncStatus(tags ...MetricTags) {
-	fn := funcName()
-	reportFunc(fn, "status", tags...)
+type ReporterConfig struct {
+	FuncName     string
+	ReportTiming bool
 }
 
-func ReportFuncCall(tags ...MetricTags) {
-	fn := funcName()
-	reportFunc(fn, "called", tags...)
+type defaultFuncReporter struct {
+	reportTiming bool
+	funcName     string
 }
 
-func reportFunc(fn, action string, tags ...MetricTags) {
+func NewReporter() Reporter {
+	return defaultFuncReporter{
+		reportTiming: true,
+		funcName:     funcName(),
+	}
+}
+
+func NewReporterFromConfig(options ReporterConfig) Reporter {
+	return defaultFuncReporter{
+		reportTiming: options.ReportTiming,
+		funcName:     options.FuncName,
+	}
+}
+
+func (f defaultFuncReporter) ReportCall(tags ...MetricTags) StopTimerFunc {
+	reportFunc(f.funcName, "called", tags...)
+	if f.reportTiming {
+		fmt.Println("timing")
+		return f.reportFuncTiming(tags...)
+	}
+	return mockTiming
+}
+
+func (f defaultFuncReporter) ReportError(tags ...MetricTags) {
+	reportFunc(f.funcName, "error", tags...)
+}
+
+func mockTiming() {
+	// This really does nothing...
+}
+
+func reportFunc(funcName, action string, tags ...MetricTags) {
 	if client == nil {
 		return
 	}
 	tagSpec := config.BaseTags() + joinTags(tags...)
-	tagSpec += ",func_name=" + fn
+	tagSpec += ",func_name=" + funcName
 	client.Increment(fmt.Sprintf("func.%v", action) + tagSpec)
 }
 
 type StopTimerFunc func()
 
-func ReportFuncTiming(tags ...MetricTags) StopTimerFunc {
+func (f defaultFuncReporter) reportFuncTiming(tags ...MetricTags) StopTimerFunc {
 	if client == nil {
 		return func() {}
 	}
 	t := time.Now()
-	fn := funcName()
 	tagSpec := config.BaseTags() + joinTags(tags...)
-	tagSpec += ",func_name=" + fn
+	tagSpec += ",func_name=" + f.funcName
 
 	doneC := make(chan struct{})
 	go func(name string, start time.Time) {
@@ -57,7 +87,7 @@ func ReportFuncTiming(tags ...MetricTags) StopTimerFunc {
 			ticker.Stop()
 			return
 		}
-	}(fn, t)
+	}(f.funcName, t)
 
 	return func() {
 		d := time.Since(t)
