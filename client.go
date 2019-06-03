@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/bringhub/statsd/memstatsd"
+	"github.com/tampajohn/statsd/memstatsd"
 )
 
 // test comment for codeship
