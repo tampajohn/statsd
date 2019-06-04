@@ -11,7 +11,7 @@ import (
 // test comment for codeship
 var client Statter
 var config *MetricsConfig
-var reporter ErrorReporter
+var errorReporter ErrorReporter
 var noStatterErr = errors.New("No Statter provided, if youy wish to use a mockStatter, please set config.MockingEnabled = true")
 
 type MetricsConfig struct {

@@ -29,7 +29,7 @@ func NewReporter() Reporter {
 	}
 }
 
-func NewReporterFromConfig(options ReporterConfig) Reporter {
+func NewReporterFromConfig(options *ReporterConfig) Reporter {
 	return defaultFuncReporter{
 		reportTiming: options.ReportTiming,
 		funcName:     options.FuncName,
@@ -80,8 +80,8 @@ func (f defaultFuncReporter) reportFuncTiming(tags ...MetricTags) StopTimerFunc 
 			ticker.Stop()
 			return
 		case <-ticker.C:
-			if reporter != nil {
-				reporter.Errorf("detected stuck function: %s stuck for %v\nspec:%s", name, time.Since(start), tagSpec)
+			if errorReporter != nil {
+				errorReporter.Errorf("detected stuck function: %s stuck for %v\nspec:%s", name, time.Since(start), tagSpec)
 			}
 			client.Increment("func.stuck" + tagSpec)
 			ticker.Stop()
