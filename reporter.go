@@ -39,7 +39,6 @@ func NewReporterFromConfig(options *ReporterConfig) Reporter {
 func (f defaultFuncReporter) ReportCall(tags ...MetricTags) StopTimerFunc {
 	reportFunc(f.funcName, "called", tags...)
 	if f.reportTiming {
-		fmt.Println("timing")
 		return f.reportFuncTiming(tags...)
 	}
 	return mockTiming
