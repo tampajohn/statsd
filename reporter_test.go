@@ -91,5 +91,5 @@ func TestNewReporterWithEmptyExtraTags(t *testing.T) {
 		ReportTiming: true,
 		FuncName:     "something-arbitrary",
 	})
-	reporter.ReportCall(map[string]string{}.With("extra", "thing"))
+	reporter.ReportCall(MetricTags{}.With("extra", "thing"))
 }
