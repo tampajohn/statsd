@@ -18,16 +18,18 @@ type MemStatsd struct {
 	statsd Statter
 	debug  bool
 	env    string
+	ctags  map[string]string
 
 	previous     *MemStats
 	allocLatency time.Duration
 }
 
-func New(prefix string, envName string, statsd Statter, debug ...bool) MemStatsd {
+func New(prefix string, envName string, statsd Statter, customTags map[string]string, debug ...bool) MemStatsd {
 	m := MemStatsd{
 		prefix: prefix,
 		statsd: statsd,
 		env:    envName,
+		ctags:  customTags,
 	}
 	if len(debug) > 0 && debug[0] {
 		m.debug = true
@@ -38,6 +40,12 @@ func New(prefix string, envName string, statsd Statter, debug ...bool) MemStatsd
 func (m *MemStatsd) Run(d time.Duration) {
 	tags := ",env=" + m.env
 	t := time.NewTicker(d)
+
+	if m.ctags != nil {
+		xtags := joinTags(m.ctags)
+		tags = xtags + tags
+	}
+
 	go func() {
 		for range t.C {
 			m.pushMemStats(tags)
@@ -189,4 +197,15 @@ func (m *MemStatsd) snapshotMemStats() (latest *MemStats, delta MemStats) {
 	}
 	m.previous = latest
 	return
+}
+
+func joinTags(tags ...map[string]string) string {
+	if len(tags) == 0 {
+		return ""
+	}
+	var str string
+	for k, v := range tags[0] {
+		str += fmt.Sprintf(",%s=%s", k, v)
+	}
+	return str
 }
