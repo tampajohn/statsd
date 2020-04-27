@@ -3,6 +3,7 @@
 package memstatsd
 
 import (
+	"encoding/json"
 	"fmt"
 	"runtime"
 	"time"
@@ -30,15 +31,19 @@ type Config struct {
 	Debug bool
 }
 
+type Tags struct {
+	Service string
+}
+
 func WithConfig(cfg Config) MemStatsdOption {
 	return func(m *MemStatsd) {
 		m.debug = cfg.Debug
 	}
 }
 
-func WithTags(tags map[string]string) MemStatsdOption {
+func WithTags(tags Tags) MemStatsdOption {
 	return func(m *MemStatsd) {
-		m.ctags = tags
+		m.ctags = structToMap(tags)
 	}
 }
 
@@ -227,4 +232,13 @@ func joinTags(tags ...map[string]string) string {
 		str += fmt.Sprintf(",%s=%s", k, v)
 	}
 	return str
+}
+
+func structToMap(s interface{}) map[string]string {
+	var m map[string]string
+
+	sm, _ := json.Marshal(s)
+	json.Unmarshal(sm, &m)
+
+	return m
 }

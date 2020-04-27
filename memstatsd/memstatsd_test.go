@@ -30,7 +30,7 @@ func TestMemstatsd(t *testing.T) {
 
 func TestMemstatsdWithTag(t *testing.T) {
 	msd := New("memstatsd.", "testing", statter{},
-		WithTags(map[string]string{"service": "test"}),
+		WithTags(Tags{Service: "test"}),
 		WithConfig(Config{Debug: true}))
 	msd.Run(5 * time.Second)
 	time.Sleep(time.Second * 10)
