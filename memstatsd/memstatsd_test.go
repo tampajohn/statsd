@@ -15,8 +15,21 @@ func (s statter) Timing(bucket string, d time.Duration) {
 func (s statter) Gauge(bucket string, value int) {
 	log.Println(bucket, value)
 }
+
 func TestMemstatsd(t *testing.T) {
-	msd := New("memstatsd.", "testing", statter{}, map[string]string{"service": "test"}, true)
+	msd := New("memstatsd.", "testing", statter{})
+	msd.Run(5 * time.Second)
+	time.Sleep(time.Second * 10)
+
+	go func() {
+		time.Sleep(time.Minute)
+	}()
+
+	time.Sleep(time.Minute)
+}
+
+func TestMemstatsdWithTag(t *testing.T) {
+	msd := New("memstatsd.", "testing", statter{}, WithTags(map[string]string{"service": "test"}))
 	msd.Run(5 * time.Second)
 	time.Sleep(time.Second * 10)
 
