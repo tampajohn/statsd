@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -229,7 +230,7 @@ func joinTags(tags ...map[string]string) string {
 	}
 	var str string
 	for k, v := range tags[0] {
-		str += fmt.Sprintf(",%s=%s", k, v)
+		str += fmt.Sprintf(",%s=%s", strings.ToLower(k), v)
 	}
 	return str
 }
