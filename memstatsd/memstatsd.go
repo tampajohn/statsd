@@ -24,16 +24,25 @@ type MemStatsd struct {
 	allocLatency time.Duration
 }
 
-func New(prefix string, envName string, statsd Statter, customTags map[string]string, debug ...bool) MemStatsd {
+type MemStatsdOption func(*MemStatsd)
+
+func WithTags(tags map[string]string) MemStatsdOption {
+	return func(m *MemStatsd) {
+		m.ctags = tags
+	}
+}
+
+func New(prefix string, envName string, statsd Statter, opts ...MemStatsdOption) MemStatsd {
 	m := MemStatsd{
 		prefix: prefix,
 		statsd: statsd,
 		env:    envName,
-		ctags:  customTags,
 	}
-	if len(debug) > 0 && debug[0] {
-		m.debug = true
+
+	for _, opt := range opts {
+		opt(&m)
 	}
+
 	return m
 }
 
