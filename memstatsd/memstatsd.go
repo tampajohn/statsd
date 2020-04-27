@@ -26,6 +26,16 @@ type MemStatsd struct {
 
 type MemStatsdOption func(*MemStatsd)
 
+type Config struct {
+	Debug bool
+}
+
+func WithConfig(cfg Config) MemStatsdOption {
+	return func(m *MemStatsd) {
+		m.debug = cfg.Debug
+	}
+}
+
 func WithTags(tags map[string]string) MemStatsdOption {
 	return func(m *MemStatsd) {
 		m.ctags = tags
