@@ -44,8 +44,12 @@ func WithConfig(cfg Config) MemStatsdOption {
 }
 
 func WithTags(tags Tags) MemStatsdOption {
+	t, err := structToMap(tags)
+	if err != nil {
+		panic(err)
+	}
 	return func(m *MemStatsd) {
-		m.ctags = structToMap(tags)
+		m.ctags = t
 	}
 }
 
