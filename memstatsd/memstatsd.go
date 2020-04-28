@@ -3,8 +3,9 @@
 package memstatsd
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
+	"reflect"
 	"runtime"
 	"strings"
 	"time"
@@ -235,11 +236,20 @@ func joinTags(tags ...map[string]string) string {
 	return str
 }
 
-func structToMap(s interface{}) map[string]string {
-	var m map[string]string
+func structToMap(s interface{}) (map[string]string, error) {
+	v := reflect.ValueOf(s)
+	switch v.Kind() {
+	case reflect.Struct:
+		m := make(map[string]string)
+		t := v.Type()
+		for i := 0; i < v.NumField(); i++ {
+			m[t.Field(i).Name] = v.Field(i).Interface().(string)
+		}
 
-	sm, _ := json.Marshal(s)
-	json.Unmarshal(sm, &m)
+		return m, nil
 
-	return m
+	default:
+		return nil, errors.New("structToMap func expects a struct as argument")
+	}
+
 }
