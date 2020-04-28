@@ -77,11 +77,11 @@ func checkConfig(cfg *MetricsConfig) *MetricsConfig {
 	return cfg
 }
 
-func RunMemstatsd(envName string, d time.Duration, tags map[string]string) {
+func RunMemstatsd(envName string, d time.Duration, opt ...memstatsd.MemStatsdOption) {
 	if client == nil {
 		return
 	}
-	m := memstatsd.New("memstatsd.", envName, proxy{client}, tags)
+	m := memstatsd.New("memstatsd.", envName, proxy{client}, opt...)
 	m.Run(d)
 }
 

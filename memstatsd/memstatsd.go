@@ -3,8 +3,11 @@
 package memstatsd
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -24,16 +27,43 @@ type MemStatsd struct {
 	allocLatency time.Duration
 }
 
-func New(prefix string, envName string, statsd Statter, customTags map[string]string, debug ...bool) MemStatsd {
+type MemStatsdOption func(*MemStatsd)
+
+type Config struct {
+	Debug bool
+}
+
+type Tags struct {
+	Service string
+}
+
+func WithConfig(cfg Config) MemStatsdOption {
+	return func(m *MemStatsd) {
+		m.debug = cfg.Debug
+	}
+}
+
+func WithTags(tags Tags) MemStatsdOption {
+	t, err := structToMap(tags)
+	if err != nil {
+		panic(err)
+	}
+	return func(m *MemStatsd) {
+		m.ctags = t
+	}
+}
+
+func New(prefix string, envName string, statsd Statter, opts ...MemStatsdOption) MemStatsd {
 	m := MemStatsd{
 		prefix: prefix,
 		statsd: statsd,
 		env:    envName,
-		ctags:  customTags,
 	}
-	if len(debug) > 0 && debug[0] {
-		m.debug = true
+
+	for _, opt := range opts {
+		opt(&m)
 	}
+
 	return m
 }
 
@@ -205,7 +235,25 @@ func joinTags(tags ...map[string]string) string {
 	}
 	var str string
 	for k, v := range tags[0] {
-		str += fmt.Sprintf(",%s=%s", k, v)
+		str += fmt.Sprintf(",%s=%s", strings.ToLower(k), v)
 	}
 	return str
+}
+
+func structToMap(s interface{}) (map[string]string, error) {
+	v := reflect.ValueOf(s)
+	switch v.Kind() {
+	case reflect.Struct:
+		m := make(map[string]string)
+		t := v.Type()
+		for i := 0; i < v.NumField(); i++ {
+			m[t.Field(i).Name] = v.Field(i).Interface().(string)
+		}
+
+		return m, nil
+
+	default:
+		return nil, errors.New("structToMap func expects a struct as argument")
+	}
+
 }
